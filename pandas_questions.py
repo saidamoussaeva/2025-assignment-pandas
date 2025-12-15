@@ -50,24 +50,18 @@ def merge_regions_and_departments(regions, departments):
 
 
 def merge_referendum_and_areas(referendum, regions_and_departments):
-    """Merge referendum and regions_and_departments in one DataFrame.
-
-    You can drop the lines relative to DOM-TOM-COM departments, and the
-    french living abroad, which all have a code that contains `Z`.
-    """
+    """Merge referendum and regions_and_departments in one DataFrame."""
     ref = referendum.copy()
     rad = regions_and_departments.copy()
 
-    # Normalize department codes to perform the merge
     ref["Department code"] = (
         ref["Department code"]
-        .astype(str) # ensure string type
-        .str.strip() # remove spaces
-        .str.replace(r"\.0$", "", regex=True) # remove .0
-        .str.zfill(2) # ensures 2digit codes
-    ) 
+        .astype(str)
+        .str.strip()
+        .str.replace(r"\.0$", "", regex=True)
+        .str.zfill(2)
+    )
 
-    # Same thing here
     rad["code_dep"] = (
         rad["code_dep"]
         .astype(str)
@@ -76,10 +70,8 @@ def merge_referendum_and_areas(referendum, regions_and_departments):
         .str.zfill(2)
     )
 
-    # Remove DOM-TOM-COM and abroad containig 'Z' in their code
     ref = ref[~ref["Department code"].str.contains("Z")]
 
-    # Inner merge: keep only rows that match a department -> no missing values
     merged = ref.merge(
         rad,
         left_on="Department code",
@@ -91,15 +83,17 @@ def merge_referendum_and_areas(referendum, regions_and_departments):
 
 
 def compute_referendum_result_by_regions(referendum_and_areas):
-    """Return a table with the absolute count for each region.
-
-    The return DataFrame should be indexed by `code_reg` and have columns:
-    ['name_reg', 'Registered', 'Abstentions', 'Null', 'Choice A', 'Choice B']
-    """
+    """Return a table with the absolute count for each region."""
     result = (
         referendum_and_areas
         .groupby("name_reg", as_index=False)[
-            ["Registered", "Abstentions", "Null", "Choice A", "Choice B"]
+            [
+                "Registered",
+                "Abstentions",
+                "Null",
+                "Choice A",
+                "Choice B",
+            ]
         ]
         .sum()
     )
@@ -109,7 +103,6 @@ def compute_referendum_result_by_regions(referendum_and_areas):
 
 def plot_referendum_map(referendum_result_by_regions):
     """Plot a map with the results from the referendum."""
-
     regions_geo = gpd.read_file("data/regions.geojson")
 
     regions_geo = regions_geo.merge(
